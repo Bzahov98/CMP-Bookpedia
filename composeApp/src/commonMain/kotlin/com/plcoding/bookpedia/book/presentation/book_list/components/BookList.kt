@@ -33,7 +33,7 @@ fun BookList(
         ) { book ->
             BookListItem(
                 book = book,
-                onBookClick = { onBookClick(book) },
+                onClick = { onBookClick(book) },
                 modifier = Modifier.widthIn(700.dp).fillMaxWidth().padding(horizontal = 16.dp),
             )
         }

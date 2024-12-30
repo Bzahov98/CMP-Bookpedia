@@ -1,6 +1,7 @@
 package com.plcoding.bookpedia.book.presentation.book_list
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,7 +10,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -17,14 +23,18 @@ import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cmp_bookpedia.composeapp.generated.resources.Res
 import cmp_bookpedia.composeapp.generated.resources.favorites
+import cmp_bookpedia.composeapp.generated.resources.no_favorite_books
+import cmp_bookpedia.composeapp.generated.resources.no_search_results
 import cmp_bookpedia.composeapp.generated.resources.search_results
 import com.plcoding.bookpedia.book.domain.Book
 import com.plcoding.bookpedia.book.presentation.book_list.components.BookList
@@ -63,6 +73,27 @@ fun BookListScreen(
     onAction: (BookListAction) -> Unit,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
+    val pagerState = rememberPagerState { 2 } // Create a pager state with 2 pages
+    val searchResultListState =
+        rememberLazyListState() // For the search result list. Animates Scroll to top when the search query changes. in order to force animation for the list when the search query changes, we need to create a new LazyListState instance every time the search query changes.
+    val favouriteResultListState = rememberLazyListState() //
+
+    // Animate Scroll to top when the search query changes.
+    LaunchedEffect(state.searchResults) {
+        searchResultListState.animateScrollToItem(0)
+    }
+    LaunchedEffect(state.favoriteBooks) {
+        favouriteResultListState.animateScrollToItem(0)
+    }
+    // When the user selects a tab, we want to update the state to reflect the selected tab
+    LaunchedEffect(state.selectedTabIndex) {
+        pagerState.animateScrollToPage(state.selectedTabIndex)
+    }
+    // When the user selects a tab, we want to update the state to reflect the selected tab
+    LaunchedEffect(pagerState.currentPage) {
+        onAction(BookListAction.OnTabSelected(pagerState.currentPage))
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -131,22 +162,94 @@ fun BookListScreen(
 
                     Tab(
                         selected = state.selectedTabIndex == 1,
-                        onClick = { onAction(BookListAction.OnTabSelected(1)) },
+                        onClick = {
+                            onAction(BookListAction.OnTabSelected(1))
+                        },
                         modifier = Modifier.weight(1f),
                         selectedContentColor = SandYellow,
                         unselectedContentColor = Color.Black.copy(alpha = 0.5f)
                     ) {
-                        Text(text = stringResource(Res.string.favorites))
+                        Text(
+                            text = stringResource(Res.string.favorites),
+                            modifier = Modifier
+                                .padding(vertical = 12.dp)
+                        )
                     }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
-            }
 
-            BookList(
-                books = state.favoriteBooks,
-                onBookClick = { onAction(BookListAction.OnBookClick(it)) },
-                modifier = Modifier.fillMaxSize()
-            )
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) { pagerIndex ->
+                    Box(
+                        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+                    ) {
+                        when (pagerIndex) {
+                            0 -> {
+                                if (state.isLoading) {
+                                    CircularProgressIndicator()
+                                } else {
+                                    when {
+                                        // Show error message if there is an error
+                                        state.errorMessage != null -> {
+                                            Text(
+                                                text = state.errorMessage.asString(),
+                                                textAlign = TextAlign.Center,
+                                                style = MaterialTheme.typography.headlineSmall,
+                                                color = MaterialTheme.colorScheme.error
+                                            )
+                                        }
+                                        // Show no search results message if there are no results
+                                        state.searchResults.isEmpty() -> {
+                                            Text(
+                                                text = stringResource(Res.string.no_search_results),
+                                                textAlign = TextAlign.Center,
+                                                style = MaterialTheme.typography.headlineSmall
+                                            )
+                                        }
+                                        // Show the search results
+                                        else -> {
+                                            BookList(
+                                                books = state.searchResults,
+                                                onBookClick = {
+                                                    onAction(
+                                                        BookListAction.OnBookClick(
+                                                            it
+                                                        )
+                                                    )
+                                                },
+                                                modifier = Modifier.fillMaxSize(),
+                                                scrollState = searchResultListState
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            1 -> {
+                                if (state.favoriteBooks.isEmpty()) {
+                                    Text(
+                                        text = stringResource(Res.string.no_favorite_books),
+                                        textAlign = TextAlign.Center,
+                                        style = MaterialTheme.typography.headlineSmall
+                                    )
+                                } else {
+                                    BookList(
+                                        books = state.favoriteBooks,
+                                        onBookClick = { onAction(BookListAction.OnBookClick(it)) },
+                                        modifier = Modifier.fillMaxSize(),
+                                        scrollState = favouriteResultListState
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                }
+            }
         }
     }
 }

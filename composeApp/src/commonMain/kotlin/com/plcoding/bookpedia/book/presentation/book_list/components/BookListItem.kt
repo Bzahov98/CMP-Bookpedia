@@ -45,22 +45,31 @@ import kotlin.math.round
 @Composable
 fun BookListItem(
     book: Book,
-    onBookClick: () -> Unit, modifier: Modifier
+    onClick: () -> Unit,
+    modifier: Modifier
 ) {
     Surface(
-        shape = RoundedCornerShape(25.dp),
-        modifier = modifier.clickable(onClick = onBookClick),
+        shape = RoundedCornerShape(32.dp),
+        modifier = modifier
+            .clickable(onClick = onClick),
         color = LightBlue.copy(alpha = 0.2f)
     ) {
         Row(
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxWidth()
-                .height(IntrinsicSize.Min)
+                .height(IntrinsicSize.Min),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Box(modifier = Modifier.height(100.dp), contentAlignment = Alignment.Center) {
-                var imageLoadResult by remember { mutableStateOf<Result<Painter>?>(null) }
-                //
+            Box(
+                modifier = Modifier
+                    .height(100.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                var imageLoadResult by remember {
+                    mutableStateOf<Result<Painter>?>(null)
+                }
                 val painter = rememberAsyncImagePainter(
                     model = book.imageUrl,
                     onSuccess = {
@@ -70,7 +79,8 @@ fun BookListItem(
                             } else {
                                 Result.failure(Exception("Invalid image size"))
                             }
-                    }, onError = {
+                    },
+                    onError = {
                         it.result.throwable.printStackTrace()
                         imageLoadResult = Result.failure(it.result.throwable)
                     })
@@ -96,8 +106,7 @@ fun BookListItem(
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .weight(1f)
-                    .padding(start = 16.dp),
+                    .weight(1f),
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
@@ -106,9 +115,9 @@ fun BookListItem(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                book.authors.firstOrNull()?.let {
+                book.authors.firstOrNull()?.let { authorName ->
                     Text(
-                        text = it,
+                        text = authorName,
                         style = MaterialTheme.typography.bodyLarge,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -120,11 +129,8 @@ fun BookListItem(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "${
-                                round(rating * 10) / 10.0
-                            }",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = LightBlue
+                            text = "${round(rating * 10) / 10.0}",
+                            style = MaterialTheme.typography.bodyMedium
                         )
                         Icon(
                             imageVector = Icons.Default.Star,
@@ -139,7 +145,8 @@ fun BookListItem(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                modifier = Modifier.size(36.dp).align(Alignment.CenterVertically),
+                modifier = Modifier
+                    .size(36.dp)
             )
         }
     }

@@ -49,7 +49,7 @@ fun BookListItemPreview() {
             numPages = 100,
             numEditions = 3
         ),
-        onBookClick = {},
+        onClick = {},
         modifier = Modifier.fillMaxWidth()
     )
 }
