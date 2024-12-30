@@ -1,13 +1,12 @@
 package com.plcoding.bookpedia.app
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
+import com.plcoding.bookpedia.book.presentation.book_list.BookListScreenRoot
+import com.plcoding.bookpedia.book.presentation.book_list.BookListViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -15,12 +14,16 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 @Preview
 fun App() {
-    MaterialTheme {
-        val navController = rememberNavController()
-        NavHost(
-            navController = navController,
-            startDestination = Route.BookGraph
-        ) {
+    BookListScreenRoot(
+        viewModel = remember { BookListViewModel() },
+        onBookClick = {  }
+    )
+//    MaterialTheme {
+//        val navController = rememberNavController()
+//        NavHost(
+//            navController = navController,
+//            startDestination = Route.BookGraph
+//        ) {
 //            navigation<Route.BookGraph>(
 //                startDestination = Route.BookList
 //            ) {
@@ -73,9 +76,9 @@ fun App() {
 //                    )
 //                }
 //            }
-        }
+//        }
 
-    }
+//    }
 }
 
 @Composable
